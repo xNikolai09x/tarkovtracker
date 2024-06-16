@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarkov Item Tracker</title>
+<style>
+  /* Add your custom CSS styles here */
+  body {
+    background-image: url('eft.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: rgba(169, 169, 169, 0.8); /* Darker grey background with slight transparency */
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    position: relative;
+  }
+
+  .item {
+    display: grid;
+    grid-template-columns: 120px 200px 60px 200px repeat(3, 1fr);
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .item img {
+    width: 100px;
+    height: 100px;
+    cursor: pointer;
+  }
+
+  .count {
+    grid-column: 3;
+  }
+
+  .reason {
+    grid-column: 4;
+  }
+
+  .status {
+    grid-column: 5;
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .credit {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    font-size: 0.8em;
+    color: #000;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Tarkov Item Tracker</h1>
+    <div id="collectiblesList">
+      <!-- Table headers -->
+      <div class="item" style="font-weight: bold;">
+        <div>Image</div>
+        <div>Name</div>
+        <div>Count</div>
+        <div>Reason</div>
+        <div>Status</div>
+      </div>
+    </div>
+
+    <div id="addNewItem">
+      <input type="text" id="newItemName" placeholder="New Item Name">
+      <input type="number" id="newItemCount" placeholder="Count">
+      <input type="text" id="newItemReason" placeholder="Reason">
+      <button onclick="addItem()">Add Item</button>
+      <button onclick="saveData()">Save Data</button>
+      <button onclick="loadData()">Load Data</button>
+      <button onclick="resetPage()">Reset Page</button>
+      <button onclick="saveToFile()">Save to Local File</button>
+      <label for="fileInput">Load from File:</label>
+      <input type="file" id="fileInput" onchange="loadFromFile(event)">
+    </div>
+    <div class="credit">By xNikolai09x aka Honor_Knees</div>
+  </div>
+
+  <script>
+    // Load initial data on page load
+    window.onload = function() {
+      loadData();
+    };
+
+    // Function to adjust item count
+    function adjustCount(itemElement, change) {
+      const countElement = itemElement.parentElement.querySelector('.count span');
+      let count = parseInt(countElement.innerText);
+      count += change;
+      countElement.innerText = count;
+      saveData(); // Save data after count adjustment
+    }
+
+    // Function to add a new item
+    function addItem() {
+      const newName = document.getElementById('newItemName').value;
+      const newCount = document.getElementById('newItemCount').value;
+      const newReason = document.getElementById('newItemReason').value;
+
+      const newItemHtml = `
+        <div class="item">
+          <img src="placeholder.jpg" alt="${newName}" onclick="updateImage(this)">
+          <div>${newName}</div>
+          <div class="count">
+            <button onclick="adjustCount(this, -1)">-</button>
+            <span>${newCount}</span>
+            <button onclick="adjustCount(this, 1)">+</button>
+          </div>
+          <div class="reason">${newReason}</div>
+          <div class="status">
+            <input type="checkbox" value="notStarted"> Not Started
+            <input type="checkbox" value="started"> Started
+            <input type="checkbox" value="finished"> Finished
+          </div>
+        </div>
+      `;
+      document.getElementById('collectiblesList').insertAdjacentHTML('beforeend', newItemHtml);
+      saveData(); // Save data after adding a new item
+    }
+
+    // Function to save data to localStorage
+    function saveData() {
+      const collectiblesListHtml = document.getElementById('collectiblesList').innerHTML;
+      localStorage.setItem('collectiblesData', collectiblesListHtml);
+    }
+
+    // Function to load data from localStorage
+    function loadData() {
+      const collectiblesListHtml = localStorage.getItem('collectiblesData');
+      if (collectiblesListHtml) {
+        document.getElementById('collectiblesList').innerHTML = collectiblesListHtml;
+      }
+    }
+
+    // Function to reset the page
+    function resetPage() {
+      localStorage.removeItem('collectiblesData');
+      location.reload(); // Reload the page to reset
+    }
+
+    // Function to load data from a file
+    function loadFromFile(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        const contents = e.target.result;
+        document.getElementById('collectiblesList').innerHTML = contents;
+        saveData(); // Save loaded data to localStorage
+      };
+
+      reader.readAsText(file);
+    }
+
+    // Function to save data to a local file
+    function saveToFile() {
+      const data = localStorage.getItem('collectiblesData');
+      const blob = new Blob([data], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'collectibles.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Function to update image URL
+    function updateImage(image) {
+      const newImageUrl = prompt('Enter the new image URL:', image.src);
+      if (newImageUrl) {
+        image.src = newImageUrl;
+        saveData(); // Save data after updating image
+      }
+    }
+  </script>
+</body>
+</html>
